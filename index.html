@@ -1,0 +1,285 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz App</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3edff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .quiz-container {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px #d8c8f0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #7950b8;
+            margin-bottom: 10px;
+        }
+
+        #progress {
+            text-align: center;
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        #question {
+            color: #33264a;
+            margin-bottom: 20px;
+            font-size: 21px;
+        }
+
+        #answers {
+            display: grid;
+            gap: 12px;
+        }
+
+        .answer {
+            padding: 13px;
+            border: 2px solid #e5d8fa;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+
+        .answer:hover:not(:disabled) {
+            background: #f3edff;
+            border-color: #9b72d1;
+        }
+
+        .answer:disabled {
+            cursor: default;
+            color: #33264a;
+        }
+
+        .correct {
+            background: #d9f8e4 !important;
+            border-color: #46a66b !important;
+        }
+
+        .wrong {
+            background: #ffe0e0 !important;
+            border-color: #dc6565 !important;
+        }
+
+        #next, #restart {
+            width: 100%;
+            padding: 13px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 10px;
+            background: #8b5cc7;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #next:hover, #restart:hover {
+            background: #7042aa;
+        }
+
+        #next:disabled {
+            background: #c8b4e1;
+            cursor: not-allowed;
+        }
+
+        #result {
+            text-align: center;
+            color: #7950b8;
+            font-size: 20px;
+            margin-top: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="quiz-container">
+        <h1>Quick Quiz ✨</h1>
+        <p id="progress"></p>
+
+        <section id="quiz">
+            <h2 id="question"></h2>
+            <div id="answers"></div>
+            <button id="next" disabled>Next Question →</button>
+        </section>
+
+        <p id="result" class="hidden"></p>
+        <button id="restart" class="hidden">Try Again ↻</button>
+    </main>
+
+    <script>
+        const questions = [
+            {
+                question: "What does HTML stand for?",
+                answers: [
+                    "Hyper Text Markup Language",
+                    "High Tech Modern Language",
+                    "Home Tool Markup Language",
+                    "Hyperlinks Text Management Language"
+                ],
+                correct: 0
+            },
+            {
+                question: "Which language is used to style web pages?",
+                answers: ["Python", "CSS", "Java", "SQL"],
+                correct: 1
+            },
+            {
+                question: "Which keyword declares a constant in JavaScript?",
+                answers: ["var", "let", "const", "define"],
+                correct: 2
+            },
+            {
+                question: "What does JavaScript make possible?",
+                answers: [
+                    "Only changing fonts",
+                    "Interactive web pages",
+                    "Only storing images",
+                    "Creating HTML files automatically"
+                ],
+                correct: 1
+            },
+            {
+                question: "Which symbol is used for strict equality?",
+                answers: ["=", "==", "===", "!="],
+                correct: 2
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = false;
+
+        const questionElement = document.getElementById("question");
+        const answersElement = document.getElementById("answers");
+        const progressElement = document.getElementById("progress");
+        const nextButton = document.getElementById("next");
+        const resultElement = document.getElementById("result");
+        const quizElement = document.getElementById("quiz");
+        const restartButton = document.getElementById("restart");
+
+        function showQuestion() {
+            answered = false;
+            nextButton.disabled = true;
+
+            const current = questions[currentQuestion];
+
+            progressElement.textContent =
+                `Question ${currentQuestion + 1} of ${questions.length}`;
+
+            questionElement.textContent = current.question;
+            answersElement.innerHTML = "";
+
+            current.answers.forEach((answer, index) => {
+                const button = document.createElement("button");
+
+                button.className = "answer";
+                button.textContent = answer;
+                button.addEventListener("click", () => selectAnswer(index));
+
+                answersElement.appendChild(button);
+            });
+
+            nextButton.textContent =
+                currentQuestion === questions.length - 1
+                    ? "See Results →"
+                    : "Next Question →";
+        }
+
+        function selectAnswer(selectedIndex) {
+            if (answered) return;
+
+            answered = true;
+
+            const current = questions[currentQuestion];
+            const buttons = answersElement.querySelectorAll(".answer");
+
+            buttons.forEach((button, index) => {
+                button.disabled = true;
+
+                if (index === current.correct) {
+                    button.classList.add("correct");
+                }
+
+                if (index === selectedIndex && index !== current.correct) {
+                    button.classList.add("wrong");
+                }
+            });
+
+            if (selectedIndex === current.correct) {
+                score++;
+            }
+
+            nextButton.disabled = false;
+        }
+
+        function showResults() {
+            quizElement.classList.add("hidden");
+            progressElement.textContent = "Quiz Completed!";
+            resultElement.classList.remove("hidden");
+            restartButton.classList.remove("hidden");
+
+            const percentage = Math.round(
+                (score / questions.length) * 100
+            );
+
+            resultElement.textContent =
+                `You scored ${score}/${questions.length} (${percentage}%)! 🎉`;
+        }
+
+        nextButton.addEventListener("click", () => {
+            if (!answered) return;
+
+            currentQuestion++;
+
+            if (currentQuestion < questions.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        });
+
+        restartButton.addEventListener("click", () => {
+            currentQuestion = 0;
+            score = 0;
+
+            quizElement.classList.remove("hidden");
+            resultElement.classList.add("hidden");
+            restartButton.classList.add("hidden");
+
+            showQuestion();
+        });
+
+        showQuestion();
+    </script>
+</body>
+</html>
+```
